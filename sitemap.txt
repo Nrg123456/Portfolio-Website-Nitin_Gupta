@@ -1,0 +1,2 @@
+Replace YOUR-DOMAIN with your website address, then keep this file as a reference for search engines:
+https://YOUR-DOMAIN/

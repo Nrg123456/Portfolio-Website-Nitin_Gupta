@@ -1,0 +1,53 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Edit website</title><link rel="stylesheet" href="style.css"></head><body>
+<header class="top"><div class="w"><a class="logo" href="index.html">← Back to website</a></div></header><main class="w" id="app"></main><div id="toast" role="status"></div>
+<script src="content.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script><script>
+const D=window.SITE,NF={},PV={};
+const CATS=["Mechanical Engineering", "Product Design and Development", "CAD and 3D Modelling", "Robotics and Mechatronics", "Industrial Automation", "AI and Machine Learning", "Software Development", "Renewable Energy", "Thermal Engineering", "Manufacturing", "Aerospace Engineering", "Research and Publications", "Electronics and Embedded Systems", "Experimental Projects", "Business and Innovation", "Other Projects"],STATUS=["Idea", "Research", "Designing", "Development", "Prototyping", "Testing", "Completed", "On Hold"],SECT=[["overview", "Project Overview"], ["problem", "Problem Statement"], ["objectives", "Objectives"], ["solution", "Proposed Solution"], ["concept", "Concept Development"], ["method", "Design and Methodology"], ["specs", "Technical Specifications"], ["materials", "Materials and Components"], ["tools", "Software and Tools"], ["working", "Working Principle"], ["process", "Development Process"], ["testing", "Experiments and Testing"], ["results", "Results and Performance"], ["challenges", "Challenges and Solutions"], ["outcome", "Final Outcome"], ["future", "Future Scope"]];
+const $=s=>document.querySelector(s),app=$("#app"),uid=()=>"x"+Math.random().toString(36).slice(2,8);
+const E=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const L=s=>String(s||"").split(",").map(x=>x.trim()).filter(Boolean);
+const gp=(o,k)=>k.split(".").reduce((a,x)=>a&&a[x],o),sp=(o,k,v)=>{const a=k.split(".");a.slice(0,-1).forEach(x=>o=o[x]=o[x]||{});o[a[a.length-1]]=v};
+const src=p=>PV[p]||p;
+const FORMS={
+me:{label:"Profile and contact",single:1,fields:[["name","Name"],["email","Email"],["photo","Profile photo","img"],["resume","Resume PDF","pdf"],["phone","Phone for links (+91…)"],["phoneShow","Phone as shown"],["loc","Location"],["linkedin","LinkedIn URL"],["github","GitHub URL"],["youtube","YouTube URL"],["education","Education","ta"],["interests","Interests (comma separated)","ta"]]},
+projects:{label:"Projects",title:"title",fields:[["title","Title"],["cat","Categories (select all that fit)","msel:CATS"],["status","Status","sel:STATUS"],["duration","Duration"],["role","My contribution"],["short","Short description","ta"],["tech","Technologies (comma separated)"],["tools","Tools and software (comma separated)"],["thumb","Thumbnail image","img"],["gallery","Gallery images","imgs"]].concat(SECT.map(s=>["s."+s[0],s[1]+" (optional)","ta"]))},
+papers:{label:"Research",title:"title",fields:[["title","Paper title"],["authors","Authors"],["status","Status"],["cat","Category"],["venue","Journal or conference"],["date","Publication date"],["doi","DOI"],["link","Publication link"],["abstract","Abstract","ta"],["kw","Keywords (comma separated)"]]},
+skills:{label:"Skills",title:"n",fields:[["g","Group"],["n","Skill"],["l","Level label (e.g. Beginner)"],["p","Level bar, 0 to 100"]]},
+exp:{label:"Experience",title:"t",fields:[["g","Group (e.g. Internships)"],["t","Title"],["o","Organization"],["d","Date"],["note","Details","ta"]]},
+certs:{label:"Certifications",title:"title",fields:[["title","Course"],["org","Issuer"],["date","Date"],["score","Score"],["roll","Roll number"],["note","Notes","ta"],["file","Certificate PDF","pdf"]]}};
+
+FORMS.me.fields=FORMS.me.fields.filter(f=>!["photo","resume"].includes(f[0]));
+FORMS.files={label:"Photo and resume",single:1,fields:[["photo","Profile photo","img"],["resume","Resume PDF","pdf"]]};
+let A={tab:"projects",i:null,W:null},dirty=false;
+function fld(f,W){const [k,l,t]=f,v=gp(W,k);
+if(t==="ta")return `<label>${l}<textarea data-k="${k}" rows="4">${E(v)}</textarea></label>`;
+if(t==="msel:CATS")return `<label>${l}<select multiple size="6" data-k="${k}">${CATS.map(o=>`<option ${L(v).includes(o)?"selected":""}>${o}</option>`).join("")}</select></label>`;
+if(t&&t.startsWith("sel:"))return `<label>${l}<select data-k="${k}">${(t==="sel:CATS"?CATS:STATUS).map(o=>`<option ${o===v?"selected":""}>${o}</option>`).join("")}</select></label>`;
+if(t==="img")return `<label>${l}<input type="file" accept="image/*" data-f="${k}"></label><div class="pv">${v?`<img src="${src(v)}" alt="">`:""}</div>`;
+if(t==="imgs")return `<label>${l} (add several)<input type="file" accept="image/*" multiple data-f="${k}"></label><div class="pv">${(v||[]).map((x,i)=>`<span><img src="${src(x)}" alt=""><br><button data-act="rm" data-k="${k}" data-n="${i}">Remove</button></span>`).join("")}</div>`;
+if(t==="pdf")return `<label>${l}<input type="file" accept="application/pdf" data-f="${k}"></label><div class="hint">${v?"Current file: "+E(v):"No file yet."}</div>`;
+return `<label>${l}<input data-k="${k}" value="${E(v)}"></label>`}
+function render(){const F=FORMS[A.tab],tabs=Object.entries(FORMS).map(([k,f])=>`<button class="${A.tab===k?"on":""}" data-act="tab" data-k="${k}">${f.label}</button>`).join("");let body;
+if(F.single||A.W)body=`<div class="form">${F.fields.map(f=>fld(f,A.W)).join("")}<div class="row"><button class="btn p" data-act="save">Save changes</button>${F.single?"":`<button data-act="cancel">Cancel</button>`}</div></div>`;
+else{const arr=D[A.tab];body=`<div class="row"><button class="btn p" data-act="new">Add new</button></div>${arr.map((x,i)=>`<div class="li"><span>${E(x[F.title])}</span><span><button data-act="edit" data-n="${i}">Edit</button> <button class="btn d" data-act="del" data-n="${i}">Delete</button></span></div>`).join("")||'<div class="empty">Nothing here yet.</div>'}`}
+app.innerHTML=`<h1>Edit your website</h1><p class="lede" style="font-size:16px">1. Edit and press Save changes. 2. Press Download updated files. 3. Copy the downloaded files into your website folder and upload them. Nothing changes online until you upload.</p><div class="row"><button class="btn p" id="exp">Download updated files${dirty?" (unsaved edits)":""}</button></div><div class="tabs">${tabs}</div>${body}`;
+$("#exp").onclick=exportZip}
+function collect(){document.querySelectorAll("#app [data-k]").forEach(e=>{if(e.dataset.act)return;const v=e.multiple?[...e.selectedOptions].map(o=>o.value).join(", "):e.value;if(A.tab==="skills"&&e.dataset.k==="p")sp(A.W,"p",Math.max(0,Math.min(100,+v||0)));else sp(A.W,e.dataset.k,v)})}
+const shrink=f=>new Promise(r=>{const im=new Image();im.onload=()=>{const s=Math.min(1,1200/im.width),c=document.createElement("canvas");c.width=im.width*s;c.height=im.height*s;const g=c.getContext("2d");g.fillStyle="#fff";g.fillRect(0,0,c.width,c.height);g.drawImage(im,0,0,c.width,c.height);c.toBlob(b=>r(b),"image/jpeg",.85)};im.src=URL.createObjectURL(f)});
+async function addImg(f){const b=await shrink(f),n="img-"+uid()+".jpg";NF[n]=b;PV[n]=URL.createObjectURL(b);return n}
+function addPdf(f){const n="doc-"+uid()+".pdf";NF[n]=f;return n}
+function commit(){const F=FORMS[A.tab];if(A.tab==="me"||A.tab==="files"){Object.keys(A.W).forEach(k=>D[k==="photo"||k==="resume"?k:"me"]!==undefined&&(k==="photo"||k==="resume"?D[k]=A.W[k]:D.me[k]=A.W[k]))}else if(A.i===-1)D[A.tab].push(A.W);else D[A.tab][A.i]=A.W;dirty=true}
+app.addEventListener("click",e=>{const b=e.target.closest("button");if(!b||!b.dataset.act)return;const a=b.dataset.act;
+if(a==="tab"){A={tab:b.dataset.k,i:null,W:FORMS[b.dataset.k].single?JSON.parse(JSON.stringify(b.dataset.k==="files"?{photo:D.photo,resume:D.resume}:D.me)):null};render()}
+else if(a==="new"){A.i=-1;A.W=A.tab==="projects"?{id:"p-"+uid(),status:"Idea",cat:CATS[0],tech:"",tools:"",gallery:[],s:{}}:A.tab==="papers"?{id:"r-"+uid()}:{id:uid()};render()}
+else if(a==="edit"){A.i=+b.dataset.n;A.W=JSON.parse(JSON.stringify(D[A.tab][A.i]));render()}
+else if(a==="cancel"){A.i=null;A.W=null;render()}
+else if(a==="rm"){collect();gp(A.W,b.dataset.k).splice(+b.dataset.n,1);render()}
+else if(a==="del"){if(!confirm("Delete this item?"))return;D[A.tab].splice(+b.dataset.n,1);dirty=true;render()}
+else if(a==="save"){collect();commit();if(!FORMS[A.tab].single){A.i=null;A.W=null}render();const t=$("#toast");t.textContent="Saved. Now download the updated files.";t.style.display="block";setTimeout(()=>t.style.display="none",3500)}});
+app.addEventListener("change",async e=>{const i=e.target;if(!i.dataset.f||!i.files.length)return;const k=i.dataset.f;collect();const t=(FORMS[A.tab].fields.find(f=>f[0]===k)||[])[2];
+if(t==="pdf")sp(A.W,k,addPdf(i.files[0]));else if(t==="img")sp(A.W,k,await addImg(i.files[0]));else{const c=gp(A.W,k)||[];for(const f of i.files)c.push(await addImg(f));sp(A.W,k,c)}render()});
+async function exportZip(){if(!window.JSZip){alert("Could not load the zip tool. Check your internet and reload this page.");return}const z=new JSZip();z.file("content.js","window.SITE = "+JSON.stringify(D,null,1)+";\n");for(const[n,b]of Object.entries(NF))z.file(n,b);const blob=await z.generateAsync({type:"blob"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="website-update.zip";a.click();dirty=false;render()}
+addEventListener("beforeunload",e=>{if(dirty){e.preventDefault();e.returnValue=""}});
+render();
+</script></body></html>
